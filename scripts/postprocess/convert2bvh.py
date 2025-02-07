@@ -37,15 +37,9 @@ def init_scene(scene, params, gender='male', angle=0):
     print('success load')
     obname = '%s_avg' % gender[0]
     ob = bpy.data.objects[obname]
-    ob.data.use_auto_smooth = False  # autosmooth creates artifacts
 
     # assign the existing spherical harmonics material
     ob.active_material = bpy.data.materials['Material']
-
-    # delete the default cube (which held the material)
-    bpy.ops.object.select_all(action='DESELECT')
-    bpy.data.objects['Cube'].select_set(True)
-    bpy.ops.object.delete(use_global=False)
 
     # set camera properties and initial position
     bpy.ops.object.select_all(action='DESELECT')
@@ -98,13 +92,18 @@ def Rodrigues(rotvec):
     theta = np.linalg.norm(rotvec)
     r = (rotvec/theta).reshape(3, 1) if theta > 0. else rotvec
     cost = np.cos(theta)
-    mat = np.asarray([[0, -r[2], r[1]],
-                      [r[2], 0, -r[0]],
-                      [-r[1], r[0], 0]])
+
+    mat = np.asarray([
+        [0, -r[2][0], r[1][0]],
+        [r[2][0], 0, -r[0][0]],
+        [-r[1][0], r[0][0], 0]
+    ])
+
     return(cost*np.eye(3) + (1-cost)*r.dot(r.T) + np.sin(theta)*mat)
 
 def rodrigues2bshapes(pose):
-    rod_rots = np.asarray(pose).reshape(24, 3)
+#    rod_rots = np.asarray(pose).reshape(24, 3)
+    rod_rots = np.asarray(pose).reshape(23, 3)
     mat_rots = [Rodrigues(rod_rot) for rod_rot in rod_rots]
     bshapes = np.concatenate([(mat_rot - np.eye(3)).ravel()
                               for mat_rot in mat_rots[1:]])
@@ -229,32 +228,10 @@ def main(params):
     return 0
 
 if __name__ == '__main__':
-    try:
-        import argparse
-        if bpy.app.background:
-            parser = argparse.ArgumentParser(
-                description='Create keyframed animated skinned SMPL mesh from VIBE output')
-            parser.add_argument('path', type=str,
-                help='Input file or directory')
-            parser.add_argument('--out', dest='out', type=str, required=True,
-                help='Output file or directory')
-            parser.add_argument('--smpl_data_folder', type=str,
-                default='./data/smplx/SMPL_maya',
-                help='Output file or directory')
-            parser.add_argument('--gender', type=str,
-                default='male')
-            args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
-            print(vars(args))
-            main(vars(args))
-    except SystemExit as ex:
-
-        if ex.code is None:
-            exit_status = 0
-        else:
-            exit_status = ex.code
-
-        print('Exiting. Exit status: ' + str(exit_status))
-
-        # Only exit to OS when we are not running in Blender GUI
-        if bpy.app.background:
-            sys.exit(exit_status)
+    args = {
+        'gender' : 'male',
+        'path' : '/media/tlousky/SSDStorage/Gen/EasyMocap/output/sv1p/smpl',
+        'smpl_data_folder' : '/media/tlousky/SSDStorage/Gen/EasyMocap/data/smplx/SMPL_maya',
+        'out' : '/media/tlousky/SSDStorage/Gen/EasyMocap/output/sv1p'
+    }
+    main(args)

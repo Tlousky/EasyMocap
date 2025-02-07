@@ -9,8 +9,16 @@ def create_prior_from_cmu(n_gaussians, epsilon=1e-15):
     """Load the gmm from the CMU motion database."""
     from os.path import dirname
     np_dtype = np.float32
-    with open(join(dirname(__file__), 'gmm_%02d.pkl'%(n_gaussians)), 'rb') as f:
-        gmm = pickle.load(f, encoding='latin1')
+    try:
+        with open(join(dirname(__file__), 'gmm_%02d.pkl'%(n_gaussians)), 'rb') as f:
+            gmm = pickle.load(f, encoding='latin1')
+    except pickle.UnpicklingError as e:
+        print(f"Unpickling error: {e}")
+        try:
+            # Try using UTF-8 encoding if the above fails
+            gmm = pickle.load(f, encoding='utf-8')
+        except Exception as e:
+            print(f"Failed to load with both encodings: {e}")
     if True:
         means = gmm['means'].astype(np_dtype)
         covs = gmm['covars'].astype(np_dtype)

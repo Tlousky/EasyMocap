@@ -67,7 +67,7 @@ class SMPLlayer(nn.Module):
         self.dtype = dtype
         self.use_pose_blending = use_pose_blending
         self.use_shape_blending = use_shape_blending
-        self.use_joints = use_joints
+        self.use_joints = True # use_joints
         
         if isinstance(device, str):
             device = torch.device(device)
